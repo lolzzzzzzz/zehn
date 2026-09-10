@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zehn, will you go out with me?</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blush: #FFE4E9;
+    --rose: #FF6B8A;
+    --cherry: #8C1D35;
+    --cream: #FFF8F5;
+    --mint: #BFE8D6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Fredoka', 'Segoe UI', sans-serif;
+    background: var(--blush);
+    color: var(--cherry);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow: hidden;
+    position: relative;
+  }
+  .card {
+    background: var(--cream);
+    border-radius: 32px;
+    padding: 48px 32px;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 16px 0 rgba(140, 29, 53, 0.12);
+    position: relative;
+    z-index: 2;
+  }
+  .face {
+    font-size: 72px;
+    line-height: 1;
+    margin-bottom: 20px;
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  h1 {
+    font-size: clamp(28px, 6vw, 40px);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .sub {
+    font-size: 17px;
+    color: #A8506A;
+    margin-bottom: 32px;
+    min-height: 24px;
+  }
+  .buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    min-height: 64px;
+  }
+  button {
+    font-family: inherit;
+    font-weight: 600;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), font-size 0.25s ease, padding 0.25s ease;
+  }
+  button:focus-visible { outline: 3px solid var(--cherry); outline-offset: 3px; }
+  #yes {
+    background: var(--rose);
+    color: white;
+    font-size: 20px;
+    padding: 16px 40px;
+    box-shadow: 0 6px 0 #C94566;
+  }
+  #yes:hover { transform: translateY(-3px); }
+  #yes:active { transform: translateY(2px); box-shadow: 0 2px 0 #C94566; }
+  #no {
+    background: transparent;
+    color: var(--cherry);
+    border: 2px solid var(--cherry);
+    font-size: 20px;
+    padding: 16px 40px;
+  }
+  #no:hover { background: rgba(140,29,53,0.06); }
+
+  /* success overlay */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(255, 107, 138, 0.92);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 10;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .popup {
+    background: var(--cream);
+    border-radius: 32px;
+    padding: 48px 32px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    transform: scale(0.7);
+    transition: transform 0.4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .overlay.show .popup { transform: scale(1); }
+  .popup .face { font-size: 88px; }
+  .popup h2 { font-size: 34px; margin-bottom: 10px; }
+  .popup p { font-size: 18px; color: #A8506A; }
+
+  /* falling hearts */
+  .heart {
+    position: fixed;
+    top: -40px;
+    font-size: 28px;
+    animation: fall linear forwards;
+    z-index: 11;
+    pointer-events: none;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); opacity: 0.6; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card" id="card">
+  <div class="face" id="face">🥺</div>
+  <h1 id="question">Zehn, will you go out with me?</h1>
+  <p class="sub" id="sub">No pressure. Okay, a little pressure.</p>
+  <div class="buttons">
+    <button id="yes">Yes!</button>
+    <button id="no">No</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-live="polite">
+  <div class="popup">
+    <div class="face">🥰</div>
+    <h2>Yay, Zehn!!</h2>
+    <p>I knew you'd say yes, Zehn. I'll pick the place, you pick the time. 💕</p>
+  </div>
+</div>
+
+<script>
+  const yesBtn = document.getElementById('yes');
+  const noBtn = document.getElementById('no');
+  const question = document.getElementById('question');
+  const sub = document.getElementById('sub');
+  const face = document.getElementById('face');
+  const overlay = document.getElementById('overlay');
+
+  const stages = [
+    { q: "Zehn, are you sure?",              sub: "Take your time. But also, hurry.",           face: "🥺", noText: "No" },
+    { q: "Really sure?",                 sub: "Think about how fun it would be.",            face: "😢", noText: "Nope" },
+    { q: "Pretty please, Zehn?",             sub: "I'll pay. For everything. Forever.",          face: "😭", noText: "still no" },
+    { q: "What if I bring snacks?",      sub: "Unlimited snacks. Your choice of snacks.",    face: "🍿", noText: "no.." },
+    { q: "Okay but consider: yes.",      sub: "The no button is getting shy.",               face: "👀", noText: "no" },
+    { q: "You're breaking my heart 💔",  sub: "It's fine. I'm fine. Everything's fine.",     face: "😩", noText: "no" },
+    { q: "Last chance, Zehn…",               sub: "The no button is basically gone now.",        face: "🙏", noText: "n" },
+    { q: "Just click yes already!!",     sub: "There is literally only one button left.",   face: "😤", noText: "" },
+  ];
+
+  let noCount = 0;
+
+  noBtn.addEventListener('click', () => {
+    const stage = stages[Math.min(noCount, stages.length - 1)];
+    noCount++;
+
+    question.textContent = stage.q;
+    sub.textContent = stage.sub;
+    face.textContent = stage.face;
+
+    // shrink no, grow yes
+    const scaleNo = Math.max(0.15, 1 - noCount * 0.15);
+    noBtn.style.fontSize = (20 * scaleNo) + 'px';
+    noBtn.style.padding = (16 * scaleNo) + 'px ' + (40 * scaleNo) + 'px';
+    noBtn.style.borderWidth = (2 * scaleNo) + 'px';
+    noBtn.textContent = stage.noText;
+
+    const scaleYes = 1 + noCount * 0.18;
+    yesBtn.style.fontSize = (20 * scaleYes) + 'px';
+    yesBtn.style.padding = (16 * scaleYes) + 'px ' + (40 * scaleYes) + 'px';
+
+    // little wiggle on the face
+    face.style.transform = 'rotate(-10deg) scale(1.15)';
+    setTimeout(() => face.style.transform = '', 250);
+
+    // final stage: no button disappears entirely
+    if (noCount >= stages.length) {
+      noBtn.style.display = 'none';
+    }
+  });
+
+  yesBtn.addEventListener('click', () => {
+    overlay.classList.add('show');
+    rainHearts();
+  });
+
+  function rainHearts() {
+    const emojis = ['💖', '💗', '💕', '💘', '🌸', '✨'];
+    for (let i = 0; i < 60; i++) {
+      setTimeout(() => {
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        h.style.left = Math.random() * 100 + 'vw';
+        h.style.fontSize = (18 + Math.random() * 24) + 'px';
+        h.style.animationDuration = (2.5 + Math.random() * 2.5) + 's';
+        document.body.appendChild(h);
+        setTimeout(() => h.remove(), 5500);
+      }, i * 60);
+    }
+  }
+</script>
+</body>
+</html>
